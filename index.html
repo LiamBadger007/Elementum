@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elementum — Periodic Table Study</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --bg2: #0f1525;
+  --bg3: #161d30;
+  --surface: #1a2235;
+  --surface2: #212b40;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --text: #e8eaf0;
+  --text2: #8892a4;
+  --text3: #5a6478;
+  --accent: #4f9cf9;
+  --accent2: #7c3aed;
+
+  --alkali: #e74c3c;
+  --alkaline: #e67e22;
+  --transition: #3b82f6;
+  --post: #6366f1;
+  --metalloid: #10b981;
+  --nonmetal: #06b6d4;
+  --halogen: #f59e0b;
+  --noble: #8b5cf6;
+  --lanthanide: #ec4899;
+  --actinide: #ef4444;
+
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10,14,26,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  height: 58px;
+  display: flex; align-items: center;
+  padding: 0 2rem;
+  gap: 0;
+}
+.nav-logo {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  margin-right: 2rem;
+  cursor: pointer;
+}
+.nav-logo span { color: var(--accent); }
+.nav-links { display: flex; gap: 0; flex: 1; }
+.nav-link {
+  padding: 0 1rem;
+  height: 58px;
+  display: flex; align-items: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.nav-link:hover { color: var(--text); }
+.nav-link.active { color: var(--text); border-bottom-color: var(--accent); }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 0.75rem; }
+.score-badge {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-family: 'Space Mono', monospace;
+  color: var(--accent);
+  display: none;
+}
+
+/* PAGES */
+.page { display: none; padding-top: 58px; min-height: 100vh; }
+.page.active { display: block; }
+
+/* ===================== TABLE PAGE ===================== */
+#page-table { padding: 58px 0 0; }
+
+.table-header {
+  padding: 2rem 2rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+}
+.table-header h1 {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.4rem; font-weight: 700;
+  color: var(--text);
+  flex: 1;
+}
+.search-wrap {
+  position: relative;
+}
+.search-wrap input {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 8px 14px 8px 36px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.875rem;
+  width: 200px;
+  outline: none;
+  transition: border-color 0.15s, width 0.2s;
+}
+.search-wrap input:focus { border-color: var(--accent); width: 240px; }
+.search-wrap input::placeholder { color: var(--text3); }
+.search-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--text3); pointer-events: none; font-size: 14px;
+}
+.filter-pills { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 2rem 1rem; }
+.pill {
+  padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500;
+  border: 1px solid transparent; cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.pill:hover { opacity: 0.8; }
+.pill.active { opacity: 1 !important; }
+
+.table-container { overflow-x: auto; padding: 0 1rem 1rem; }
+.pt-grid {
+  display: grid;
+  grid-template-columns: repeat(18, minmax(46px, 1fr));
+  gap: 3px;
+  min-width: 860px;
+}
+.el-cell {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  position: relative;
+  transition: transform 0.12s, box-shadow 0.12s;
+  border: 1px solid rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.el-cell::before {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background 0.12s;
+}
+.el-cell:hover { transform: scale(1.18) translateZ(0); z-index: 10; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+.el-cell:hover::before { background: rgba(255,255,255,0.12); }
+.el-cell.dimmed { opacity: 0.12; }
+.el-cell .z { font-size: 7px; color: rgba(255,255,255,0.7); line-height: 1; font-family: 'Space Mono', monospace; }
+.el-cell .sym { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.1; font-family: 'Space Mono', monospace; }
+.el-cell .nm { font-size: 5.5px; color: rgba(255,255,255,0.75); line-height: 1; text-align: center; padding: 0 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%; }
+.el-ref {
+  font-size: 7px; color: rgba(255,255,255,0.5); text-align: center;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 5px; font-family: 'Space Mono', monospace;
+}
+.series-row {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: repeat(18, minmax(46px,1fr));
+  gap: 3px; margin-top: 4px;
+}
+.series-label {
+  grid-column: 1/4; display: flex; align-items: center; justify-content: flex-end;
+  font-size: 8px; color: var(--text3); font-family: 'Space Mono', monospace;
+  padding-right: 6px;
+}
+
+/* ELEMENT PANEL (slide-in) */
+#el-panel {
+  position: fixed; top: 58px; right: 0; bottom: 0;
+  width: 340px;
+  background: var(--bg2);
+  border-left: 1px solid var(--border2);
+  z-index: 50;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+#el-panel.open { transform: translateX(0); }
+.panel-hero {
+  padding: 2rem 1.5rem 1.5rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.panel-sym-block {
+  width: 80px; height: 80px; border-radius: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.panel-sym-block .p-z { font-size: 12px; color: rgba(255,255,255,0.7); font-family: 'Space Mono', monospace; }
+.panel-sym-block .p-s { font-size: 32px; font-weight: 700; color: #fff; font-family: 'Space Mono', monospace; line-height: 1; }
+.panel-sym-block .p-m { font-size: 9px; color: rgba(255,255,255,0.7); font-family: 'Space Mono', monospace; }
+.panel-name { font-size: 1.5rem; font-weight: 600; color: var(--text); }
+.panel-cat { font-size: 0.75rem; padding: 3px 10px; border-radius: 20px; display: inline-block; font-weight: 500; }
+.panel-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+.prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.prop-item { background: var(--surface); border-radius: var(--radius); padding: 10px 12px; }
+.prop-label { font-size: 0.7rem; color: var(--text3); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+.prop-val { font-size: 0.875rem; font-weight: 500; color: var(--text); font-family: 'Space Mono', monospace; }
+.panel-desc { font-size: 0.875rem; color: var(--text2); line-height: 1.7; }
+.panel-close {
+  position: absolute; top: 12px; right: 12px;
+  background: var(--surface); border: none; color: var(--text2);
+  width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: background 0.15s, color 0.15s;
+}
+.panel-close:hover { background: var(--surface2); color: var(--text); }
+.panel-related { }
+.panel-related h4 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); margin-bottom: 8px; }
+.study-btn {
+  display: block; width: 100%; padding: 10px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 600;
+  transition: opacity 0.15s; text-align: center;
+}
+.study-btn:hover { opacity: 0.85; }
+
+/* ===================== QUIZ PAGE ===================== */
+#page-quiz { padding: 58px 0 0; }
+.quiz-wrap { max-width: 720px; margin: 0 auto; padding: 3rem 2rem; }
+.quiz-header { margin-bottom: 2.5rem; }
+.quiz-header h1 { font-family: 'Space Mono', monospace; font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; }
+.quiz-header p { color: var(--text2); font-size: 0.9rem; }
+
+.quiz-setup { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 2rem; }
+.quiz-setup h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
+.mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
+.mode-card {
+  background: var(--bg3); border: 2px solid var(--border);
+  border-radius: var(--radius); padding: 1rem; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.mode-card:hover { border-color: var(--border2); background: var(--surface2); }
+.mode-card.selected { border-color: var(--accent); background: rgba(79,156,249,0.08); }
+.mode-card h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+.mode-card p { font-size: 0.78rem; color: var(--text2); line-height: 1.5; }
+.cat-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.5rem; }
+.cat-check {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 12px; cursor: pointer;
+  font-size: 0.78rem; transition: all 0.15s; user-select: none;
+}
+.cat-check input { display: none; }
+.cat-check.checked { border-color: var(--accent); background: rgba(79,156,249,0.1); color: var(--accent); }
+.cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.start-btn {
+  width: 100%; padding: 13px; background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius); font-family: 'DM Sans', sans-serif;
+  font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+}
+.start-btn:hover { opacity: 0.85; }
+
+/* ACTIVE QUIZ */
+.quiz-active { display: none; }
+.quiz-progress { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+.progress-bar { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+.progress-text { font-size: 0.8rem; color: var(--text3); font-family: 'Space Mono', monospace; white-space: nowrap; }
+.q-score { font-size: 0.8rem; color: var(--accent); font-family: 'Space Mono', monospace; }
+
+.question-card {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 1.5rem;
+}
+.q-prompt { font-size: 0.8rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+.q-element-display {
+  display: flex; align-items: center; gap: 1.5rem; margin-bottom: 0.5rem;
+}
+.q-sym-box {
+  width: 80px; height: 80px; border-radius: 10px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.q-sym-box .qsz { font-size: 11px; color: rgba(255,255,255,0.7); font-family: 'Space Mono', monospace; }
+.q-sym-box .qss { font-size: 30px; font-weight: 700; color: #fff; font-family: 'Space Mono', monospace; line-height: 1; }
+.q-sym-box .qsn { font-size: 9px; color: rgba(255,255,255,0.7); font-family: 'Space Mono', monospace; }
+.q-text { font-size: 1.3rem; font-weight: 500; color: var(--text); line-height: 1.4; }
+.q-sub { font-size: 0.85rem; color: var(--text2); margin-top: 4px; }
+
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opt-btn {
+  background: var(--bg3); border: 1.5px solid var(--border2);
+  border-radius: var(--radius); padding: 12px 16px;
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+  cursor: pointer; text-align: left; transition: all 0.15s; font-weight: 400;
+}
+.opt-btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(79,156,249,0.08); }
+.opt-btn.correct { border-color: #10b981; background: rgba(16,185,129,0.12); color: #10b981; }
+.opt-btn.wrong { border-color: #ef4444; background: rgba(239,68,68,0.1); color: #ef4444; }
+.opt-btn:disabled { cursor: default; }
+.opt-btn.text-ans { grid-column: 1/-1; font-family: 'Space Mono', monospace; font-size: 1.1rem; text-align: center; }
+
+.q-input-wrap { display: flex; gap: 10px; grid-column: 1/-1; }
+.q-input-wrap input {
+  flex: 1; background: var(--bg3); border: 1.5px solid var(--border2);
+  border-radius: var(--radius); padding: 12px 14px;
+  color: var(--text); font-family: 'Space Mono', monospace; font-size: 1rem;
+  outline: none; transition: border-color 0.15s;
+}
+.q-input-wrap input:focus { border-color: var(--accent); }
+.q-input-wrap button {
+  background: var(--accent); border: none; border-radius: var(--radius);
+  color: #fff; padding: 12px 20px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; transition: opacity 0.15s;
+}
+.q-input-wrap button:hover { opacity: 0.85; }
+
+.feedback-bar {
+  border-radius: var(--radius); padding: 12px 16px; margin-bottom: 1rem;
+  font-size: 0.9rem; display: none;
+}
+.feedback-bar.show { display: block; }
+.feedback-bar.correct { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+.feedback-bar.wrong { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+
+.next-btn {
+  width: 100%; padding: 12px; background: var(--surface2); color: var(--text);
+  border: 1px solid var(--border2); border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600;
+  cursor: pointer; transition: background 0.15s; display: none;
+}
+.next-btn.show { display: block; }
+.next-btn:hover { background: var(--surface); }
+
+/* RESULTS */
+.quiz-results {
+  display: none; text-align: center; padding: 3rem 2rem;
+}
+.result-ring {
+  width: 140px; height: 140px; border-radius: 50%; margin: 0 auto 1.5rem;
+  display: flex; align-items: center; justify-content: center;
+  background: conic-gradient(var(--accent) 0%, var(--surface2) 0%);
+  position: relative;
+}
+.result-ring-inner {
+  width: 100px; height: 100px; border-radius: 50%;
+  background: var(--bg2); display: flex; align-items: center;
+  justify-content: center; flex-direction: column;
+}
+.result-pct { font-family: 'Space Mono', monospace; font-size: 1.6rem; font-weight: 700; color: var(--text); }
+.result-label { font-size: 0.75rem; color: var(--text3); }
+.result-msg { font-size: 1.4rem; font-weight: 600; margin-bottom: 0.5rem; }
+.result-sub { color: var(--text2); margin-bottom: 2rem; }
+.result-actions { display: flex; gap: 10px; justify-content: center; }
+.btn-outline {
+  padding: 10px 20px; border: 1.5px solid var(--border2);
+  background: transparent; color: var(--text); border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-outline:hover { background: var(--surface); border-color: var(--border2); }
+.btn-primary {
+  padding: 10px 20px; border: none; background: var(--accent);
+  color: #fff; border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.btn-primary:hover { opacity: 0.85; }
+
+/* ===================== FLASHCARD PAGE ===================== */
+#page-flash { padding: 58px 0 0; }
+.flash-wrap { max-width: 600px; margin: 0 auto; padding: 3rem 2rem; }
+.flash-header { margin-bottom: 2rem; }
+.flash-header h1 { font-family: 'Space Mono', monospace; font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; }
+.flash-header p { color: var(--text2); }
+
+.deck-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 2rem; }
+.deck-btn {
+  padding: 6px 14px; border: 1.5px solid var(--border2);
+  background: var(--surface); color: var(--text2); border-radius: 20px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.82rem; cursor: pointer;
+  transition: all 0.15s; font-weight: 500;
+}
+.deck-btn:hover { color: var(--text); border-color: var(--accent); }
+.deck-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.card-container { perspective: 1000px; height: 280px; margin-bottom: 1.5rem; cursor: pointer; }
+.card-inner {
+  width: 100%; height: 100%; position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-inner.flipped { transform: rotateY(180deg); }
+.card-face {
+  position: absolute; width: 100%; height: 100%;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 2rem;
+}
+.card-back { transform: rotateY(180deg); }
+.card-hint { font-size: 0.75rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
+.card-symbol { font-family: 'Space Mono', monospace; font-size: 5rem; font-weight: 700; color: var(--text); line-height: 1; }
+.card-number { font-family: 'Space Mono', monospace; font-size: 1rem; color: var(--text3); margin-top: 0.5rem; }
+.card-name { font-size: 2rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+.card-cat-label { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; font-weight: 500; }
+.card-fact { font-size: 0.9rem; color: var(--text2); text-align: center; line-height: 1.6; margin-top: 1rem; }
+
+.flash-controls { display: flex; align-items: center; gap: 1rem; justify-content: center; }
+.fc-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--border2);
+  color: var(--text); cursor: pointer; display: flex; align-items: center;
+  justify-content: center; font-size: 18px; transition: all 0.15s;
+}
+.fc-btn:hover { background: var(--surface2); border-color: var(--border2); }
+.flash-count { font-family: 'Space Mono', monospace; font-size: 0.85rem; color: var(--text3); min-width: 60px; text-align: center; }
+.flip-btn {
+  padding: 10px 24px; background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); border-radius: 20px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.flip-btn:hover { background: var(--surface); }
+.flash-known { display: flex; gap: 8px; margin-top: 1.5rem; justify-content: center; }
+.known-btn {
+  flex: 1; padding: 10px; border: 1.5px solid;
+  border-radius: var(--radius); font-family: 'DM Sans', sans-serif;
+  font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s;
+  max-width: 160px;
+}
+.known-y { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.06); color: #10b981; }
+.known-y:hover { background: rgba(16,185,129,0.15); }
+.known-n { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.06); color: #f87171; }
+.known-n:hover { background: rgba(239,68,68,0.12); }
+
+/* ===================== REFERENCE PAGE ===================== */
+#page-ref { padding: 58px 0 0; }
+.ref-wrap { max-width: 900px; margin: 0 auto; padding: 2.5rem 2rem; }
+.ref-header { margin-bottom: 2rem; }
+.ref-header h1 { font-family: 'Space Mono', monospace; font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; }
+.ref-header p { color: var(--text2); }
+
+.ref-search { margin-bottom: 1.5rem; position: relative; }
+.ref-search input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--radius); color: var(--text); padding: 10px 14px 10px 40px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none;
+  transition: border-color 0.15s;
+}
+.ref-search input:focus { border-color: var(--accent); }
+.ref-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); }
+
+.ref-table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead tr { border-bottom: 1px solid var(--border2); }
+th {
+  text-align: left; padding: 10px 12px; font-size: 0.75rem;
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3);
+  font-weight: 500; white-space: nowrap; cursor: pointer;
+}
+th:hover { color: var(--text2); }
+th.sorted { color: var(--accent); }
+td {
+  padding: 10px 12px; font-size: 0.875rem; border-bottom: 1px solid var(--border);
+  color: var(--text2);
+}
+td:first-child { font-family: 'Space Mono', monospace; color: var(--text3); font-size: 0.8rem; }
+td.sym-cell { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 1rem; color: var(--text); }
+td.name-cell { color: var(--text); font-weight: 500; cursor: pointer; }
+td.name-cell:hover { color: var(--accent); }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.cat-pill-sm {
+  font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; font-weight: 500;
+  white-space: nowrap; display: inline-block;
+}
+
+/* ===================== ELEMENT DETAIL VIEW ===================== */
+#page-element { padding: 58px 0 0; display: none; }
+#page-element.active { display: block; }
+.el-detail-wrap { max-width: 800px; margin: 0 auto; padding: 2.5rem 2rem; }
+.el-breadcrumb { font-size: 0.8rem; color: var(--text3); margin-bottom: 2rem; cursor: pointer; }
+.el-breadcrumb:hover { color: var(--accent); }
+.el-hero { display: flex; align-items: flex-start; gap: 2rem; margin-bottom: 2.5rem; flex-wrap: wrap; }
+.el-hero-sym {
+  width: 120px; height: 120px; border-radius: 16px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.el-hero-sym .ehz { font-size: 14px; color: rgba(255,255,255,0.7); font-family: 'Space Mono', monospace; }
+.el-hero-sym .ehs { font-size: 48px; font-weight: 700; color: #fff; font-family: 'Space Mono', monospace; line-height: 1; }
+.el-hero-sym .ehm { font-size: 10px; color: rgba(255,255,255,0.7); font-family: 'Space Mono', monospace; }
+.el-hero-info h1 { font-family: 'Space Mono', monospace; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+.el-hero-info .el-cat { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; font-weight: 500; display: inline-block; margin-bottom: 1rem; }
+.el-hero-info p { color: var(--text2); line-height: 1.7; max-width: 500px; }
+.el-props-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+.el-prop-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+.el-prop-card .label { font-size: 0.7rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.el-prop-card .val { font-size: 1.1rem; font-weight: 600; color: var(--text); font-family: 'Space Mono', monospace; }
+.el-prop-card .unit { font-size: 0.75rem; color: var(--text3); font-family: 'DM Sans', sans-serif; font-weight: 400; }
+.el-section { margin-bottom: 2rem; }
+.el-section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 1rem; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.el-config { font-family: 'Space Mono', monospace; font-size: 1.1rem; color: var(--text); background: var(--surface); padding: 1rem 1.25rem; border-radius: var(--radius); }
+.electron-shells { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.shell { background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); padding: 6px 12px; font-size: 0.85rem; font-family: 'Space Mono', monospace; }
+.shell-n { color: var(--text3); font-size: 0.7rem; }
+.shell-e { color: var(--accent); font-weight: 700; }
+.uses-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.use-tag { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 5px 14px; font-size: 0.82rem; color: var(--text2); }
+
+/* ===== TOOLTIPS / utils ===== */
+.badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 500; vertical-align: middle; }
+.empty { color: var(--text3); font-size: 0.9rem; text-align: center; padding: 3rem; }
+
+/* ANIMATIONS */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.page.active { animation: fadeIn 0.25s ease forwards; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" onclick="goPage('table')">Ele<span>ment</span>um</div>
+  <div class="nav-links">
+    <div class="nav-link active" data-page="table" onclick="goPage('table')">Periodic Table</div>
+    <div class="nav-link" data-page="flash" onclick="goPage('flash')">Flashcards</div>
+    <div class="nav-link" data-page="quiz" onclick="goPage('quiz')">Quiz</div>
+    <div class="nav-link" data-page="ref" onclick="goPage('ref')">Reference</div>
+  </div>
+  <div class="nav-right">
+    <div class="score-badge" id="quiz-score-nav">0 pts</div>
+  </div>
+</nav>
+
+<!-- PERIODIC TABLE PAGE -->
+<div id="page-table" class="page active">
+  <div class="table-header">
+    <h1>Periodic Table</h1>
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="table-search" placeholder="Search elements…" oninput="filterTable()">
+    </div>
+  </div>
+  <div class="filter-pills" id="filter-pills"></div>
+  <div class="table-container">
+    <div class="pt-grid" id="pt-grid"></div>
+  </div>
+</div>
+
+<!-- ELEMENT DETAIL PAGE -->
+<div id="page-element" class="page">
+  <div class="el-detail-wrap" id="el-detail-content"></div>
+</div>
+
+<!-- FLASHCARD PAGE -->
+<div id="page-flash" class="page">
+  <div class="flash-wrap">
+    <div class="flash-header">
+      <h1>Flashcards</h1>
+      <p>Click the card to reveal. Mark as known or study again.</p>
+    </div>
+    <div class="deck-selector" id="deck-selector"></div>
+    <div class="card-container" onclick="flipCard()">
+      <div class="card-inner" id="card-inner">
+        <div class="card-face card-front">
+          <div class="card-hint">What element has this symbol?</div>
+          <div class="card-symbol" id="fc-sym">—</div>
+          <div class="card-number" id="fc-num">#0</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-hint">Answer</div>
+          <div class="card-name" id="fc-name">—</div>
+          <div class="card-cat-label" id="fc-cat">—</div>
+          <div class="card-fact" id="fc-fact">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="flash-controls">
+      <button class="fc-btn" onclick="prevCard()">←</button>
+      <div class="flash-count" id="flash-count">1 / 1</div>
+      <button class="flip-btn" onclick="flipCard()">Flip</button>
+      <div class="flash-count" id="flash-known-count" style="color:var(--accent)">0 known</div>
+      <button class="fc-btn" onclick="nextCard()">→</button>
+    </div>
+    <div class="flash-known">
+      <button class="known-btn known-n" onclick="markCard(false)">✗ Study Again</button>
+      <button class="known-btn known-y" onclick="markCard(true)">✓ Got It</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ PAGE -->
+<div id="page-quiz" class="page">
+  <div class="quiz-wrap">
+    <div class="quiz-header">
+      <h1>Quiz</h1>
+      <p>Test your knowledge of the elements</p>
+    </div>
+    <div id="quiz-setup-view">
+      <div class="quiz-setup">
+        <h2>Quiz mode</h2>
+        <div class="mode-grid">
+          <div class="mode-card selected" data-mode="mc" onclick="selectMode('mc')">
+            <h3>Multiple Choice</h3>
+            <p>Choose the correct answer from 4 options</p>
+          </div>
+          <div class="mode-card" data-mode="type" onclick="selectMode('type')">
+            <h3>Type the Answer</h3>
+            <p>Recall and type the answer yourself</p>
+          </div>
+          <div class="mode-card selected" data-mode="sym" onclick="selectMode('sym')" style="display:none"></div>
+        </div>
+        <h2 style="margin-bottom:1rem">Question type</h2>
+        <div class="mode-grid" id="qtype-grid">
+          <div class="mode-card selected" data-qtype="name-from-sym" onclick="selectQType(this)">
+            <h3>Name the Element</h3>
+            <p>Given the symbol, name the element</p>
+          </div>
+          <div class="mode-card" data-qtype="sym-from-name" onclick="selectQType(this)">
+            <h3>Identify the Symbol</h3>
+            <p>Given the name, find its symbol</p>
+          </div>
+          <div class="mode-card" data-qtype="num-from-name" onclick="selectQType(this)">
+            <h3>Atomic Number</h3>
+            <p>What is the atomic number?</p>
+          </div>
+          <div class="mode-card" data-qtype="cat-from-name" onclick="selectQType(this)">
+            <h3>Element Category</h3>
+            <p>What category does this belong to?</p>
+          </div>
+        </div>
+        <h2 style="margin-bottom:1rem">Categories to include</h2>
+        <div class="cat-checkboxes" id="quiz-cats"></div>
+        <button class="start-btn" onclick="startQuiz()">Start Quiz →</button>
+      </div>
+    </div>
+    <div class="quiz-active" id="quiz-active-view">
+      <div class="quiz-progress">
+        <div class="progress-bar"><div class="progress-fill" id="q-progress-fill"></div></div>
+        <div class="progress-text" id="q-progress-text">0 / 10</div>
+        <div class="q-score" id="q-score-display">0 pts</div>
+      </div>
+      <div class="question-card" id="question-card"></div>
+      <div class="feedback-bar" id="feedback-bar"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next →</button>
+    </div>
+    <div class="quiz-results" id="quiz-results-view">
+      <div class="result-ring" id="result-ring">
+        <div class="result-ring-inner">
+          <div class="result-pct" id="result-pct">0%</div>
+          <div class="result-label">score</div>
+        </div>
+      </div>
+      <div class="result-msg" id="result-msg">Great job!</div>
+      <div class="result-sub" id="result-sub"></div>
+      <div class="result-actions">
+        <button class="btn-outline" onclick="showQuizSetup()">New Quiz</button>
+        <button class="btn-primary" onclick="startQuiz()">Try Again →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REFERENCE PAGE -->
+<div id="page-ref" class="page">
+  <div class="ref-wrap">
+    <div class="ref-header">
+      <h1>Reference</h1>
+      <p>All 118 elements — sortable and searchable</p>
+    </div>
+    <div class="ref-search">
+      <span class="ref-search-icon">⌕</span>
+      <input type="text" id="ref-search" placeholder="Filter by name, symbol, or category…" oninput="filterRef()">
+    </div>
+    <div class="ref-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortRef('z')" id="th-z">Z ▲</th>
+            <th onclick="sortRef('sym')" id="th-sym">Symbol</th>
+            <th onclick="sortRef('name')" id="th-name">Name</th>
+            <th onclick="sortRef('cat')" id="th-cat">Category</th>
+            <th onclick="sortRef('mass')" id="th-mass">Atomic Mass</th>
+            <th onclick="sortRef('mp')" id="th-mp">Melting Pt.</th>
+            <th onclick="sortRef('bp')" id="th-bp">Boiling Pt.</th>
+          </tr>
+        </thead>
+        <tbody id="ref-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ELEMENT SIDE PANEL -->
+<div id="el-panel">
+  <button class="panel-close" onclick="closePanel()">×</button>
+  <div id="el-panel-content"></div>
+</div>
+
+<script>
+const CATS = {
+  "alkali metal":         { color: "#e74c3c", label: "Alkali Metal",          uses: ["batteries","alloys","medicine"] },
+  "alkaline earth metal": { color: "#e67e22", label: "Alkaline Earth Metal",  uses: ["construction","medicine","fireworks"] },
+  "transition metal":     { color: "#3b82f6", label: "Transition Metal",      uses: ["electronics","alloys","catalysts"] },
+  "post-transition metal":{ color: "#6366f1", label: "Post-transition Metal", uses: ["packaging","electronics","alloys"] },
+  "metalloid":            { color: "#10b981", label: "Metalloid",              uses: ["semiconductors","glass","steel"] },
+  "nonmetal":             { color: "#06b6d4", label: "Nonmetal",               uses: ["life","atmosphere","organic chemistry"] },
+  "halogen":              { color: "#f59e0b", label: "Halogen",                uses: ["disinfection","manufacturing","medicine"] },
+  "noble gas":            { color: "#8b5cf6", label: "Noble Gas",              uses: ["lighting","welding","cryogenics"] },
+  "lanthanide":           { color: "#ec4899", label: "Lanthanide",             uses: ["magnets","lasers","electronics"] },
+  "actinide":             { color: "#ef4444", label: "Actinide",               uses: ["nuclear fuel","research","medicine"] },
+};
+
+const ELS = [
+  {z:1,s:"H",n:"Hydrogen",c:"nonmetal",p:1,g:1,m:"1.008",mp:"-259.1",bp:"-252.9",e:"1s¹",sh:[1],d:"The lightest element and most abundant in the universe. A colorless gas essential to water and all organic chemistry."},
+  {z:2,s:"He",n:"Helium",c:"noble gas",p:1,g:18,m:"4.003",mp:"—",bp:"-268.9",e:"1s²",sh:[2],d:"Second most abundant element in the universe. Inert, colorless gas used in balloons, MRI machines, and cryogenics."},
+  {z:3,s:"Li",n:"Lithium",c:"alkali metal",p:2,g:1,m:"6.941",mp:"180.5",bp:"1342",e:"[He]2s¹",sh:[2,1],d:"The lightest metal, highly reactive. Powers modern batteries and used as a mood-stabilizing medication."},
+  {z:4,s:"Be",n:"Beryllium",c:"alkaline earth metal",p:2,g:2,m:"9.012",mp:"1287",bp:"2469",e:"[He]2s²",sh:[2,2],d:"A lightweight strong metal used in aerospace alloys and X-ray equipment. Toxic if inhaled."},
+  {z:5,s:"B",n:"Boron",c:"metalloid",p:2,g:13,m:"10.81",mp:"2077",bp:"2075",e:"[He]2s²2p¹",sh:[2,3],d:"A hard metalloid essential for plant growth. Used in glass, ceramics, and semiconductor devices."},
+  {z:6,s:"C",n:"Carbon",c:"nonmetal",p:2,g:14,m:"12.01",mp:"3527",bp:"3642",e:"[He]2s²2p²",sh:[2,4],d:"The basis of all organic life. Exists as diamond, graphite, graphene, and fullerenes. Central to all chemistry."},
+  {z:7,s:"N",n:"Nitrogen",c:"nonmetal",p:2,g:15,m:"14.01",mp:"-210",bp:"-195.8",e:"[He]2s²2p³",sh:[2,5],d:"78% of Earth's atmosphere. Essential for proteins and DNA. Critical for agriculture via fertilizers."},
+  {z:8,s:"O",n:"Oxygen",c:"nonmetal",p:2,g:16,m:"16.00",mp:"-218.8",bp:"-183",e:"[He]2s²2p⁴",sh:[2,6],d:"21% of Earth's atmosphere. Essential for respiration and combustion. Most abundant element in Earth's crust."},
+  {z:9,s:"F",n:"Fluorine",c:"halogen",p:2,g:17,m:"19.00",mp:"-219.6",bp:"-188.1",e:"[He]2s²2p⁵",sh:[2,7],d:"The most electronegative and reactive element. Used in toothpaste, Teflon, and nuclear fuel processing."},
+  {z:10,s:"Ne",n:"Neon",c:"noble gas",p:2,g:18,m:"20.18",mp:"-248.6",bp:"-246.1",e:"[He]2s²2p⁶",sh:[2,8],d:"Colorless inert gas famous for glowing orange-red in electric tubes. Third most abundant gas in atmosphere."},
+  {z:11,s:"Na",n:"Sodium",c:"alkali metal",p:3,g:1,m:"22.99",mp:"97.8",bp:"883",e:"[Ne]3s¹",sh:[2,8,1],d:"Highly reactive metal that explodes on water contact. Essential for nerve function. Found in table salt."},
+  {z:12,s:"Mg",n:"Magnesium",c:"alkaline earth metal",p:3,g:2,m:"24.31",mp:"650",bp:"1091",e:"[Ne]3s²",sh:[2,8,2],d:"Light strong metal that burns with intense white flame. Essential for chlorophyll and human metabolism."},
+  {z:13,s:"Al",n:"Aluminum",c:"post-transition metal",p:3,g:13,m:"26.98",mp:"660.3",bp:"2519",e:"[Ne]3s²3p¹",sh:[2,8,3],d:"Most abundant metal in Earth's crust. Lightweight and corrosion-resistant. Dominant material in packaging and aerospace."},
+  {z:14,s:"Si",n:"Silicon",c:"metalloid",p:3,g:14,m:"28.09",mp:"1414",bp:"2355",e:"[Ne]3s²3p²",sh:[2,8,4],d:"The backbone of modern electronics. Second most abundant element in Earth's crust. Basis of all semiconductors."},
+  {z:15,s:"P",n:"Phosphorus",c:"nonmetal",p:3,g:15,m:"30.97",mp:"44.2",bp:"280.5",e:"[Ne]3s²3p³",sh:[2,8,5],d:"Essential for DNA, RNA, and ATP energy molecules. Critical for agriculture as fertilizer. Glows in the dark (white form)."},
+  {z:16,s:"S",n:"Sulfur",c:"nonmetal",p:3,g:16,m:"32.07",mp:"119.6",bp:"444.6",e:"[Ne]3s²3p⁴",sh:[2,8,6],d:"Bright yellow solid near volcanoes. Used in gunpowder, rubber vulcanization, and making sulfuric acid."},
+  {z:17,s:"Cl",n:"Chlorine",c:"halogen",p:3,g:17,m:"35.45",mp:"-101.5",bp:"-34.1",e:"[Ne]3s²3p⁵",sh:[2,8,7],d:"Yellow-green toxic gas used to disinfect water and make PVC plastic. Found as chloride in table salt."},
+  {z:18,s:"Ar",n:"Argon",c:"noble gas",p:3,g:18,m:"39.95",mp:"-189.4",bp:"-185.8",e:"[Ne]3s²3p⁶",sh:[2,8,8],d:"Third most abundant gas in Earth's atmosphere. Completely inert; used as shielding gas in welding."},
+  {z:19,s:"K",n:"Potassium",c:"alkali metal",p:4,g:1,m:"39.10",mp:"63.5",bp:"759",e:"[Ar]4s¹",sh:[2,8,8,1],d:"Highly reactive metal essential for all living cells. Symbol K from Latin Kalium. Burns with violet flame."},
+  {z:20,s:"Ca",n:"Calcium",c:"alkaline earth metal",p:4,g:2,m:"40.08",mp:"842",bp:"1484",e:"[Ar]4s²",sh:[2,8,8,2],d:"Most abundant metal in the human body. Essential for bones, teeth, and muscle function. Found in limestone."},
+  {z:21,s:"Sc",n:"Scandium",c:"transition metal",p:4,g:3,m:"44.96",mp:"1541",bp:"2836",e:"[Ar]3d¹4s²",sh:[2,8,9,2],d:"Rare transition metal used in aluminum alloys for aerospace and high-intensity metal halide lamps."},
+  {z:22,s:"Ti",n:"Titanium",c:"transition metal",p:4,g:4,m:"47.87",mp:"1668",bp:"3287",e:"[Ar]3d²4s²",sh:[2,8,10,2],d:"Strong as steel but 45% lighter. Corrosion-resistant. Used in aircraft, medical implants, and white paint."},
+  {z:23,s:"V",n:"Vanadium",c:"transition metal",p:4,g:5,m:"50.94",mp:"1910",bp:"3407",e:"[Ar]3d³4s²",sh:[2,8,11,2],d:"Hard silvery metal used in steel alloys for tools. Vanadium pentoxide is an important industrial catalyst."},
+  {z:24,s:"Cr",n:"Chromium",c:"transition metal",p:4,g:6,m:"52.00",mp:"1907",bp:"2671",e:"[Ar]3d⁵4s¹",sh:[2,8,13,1],d:"Lustrous hard metal. Key in stainless steel. Used for chrome plating and as green/red pigments."},
+  {z:25,s:"Mn",n:"Manganese",c:"transition metal",p:4,g:7,m:"54.94",mp:"1246",bp:"2061",e:"[Ar]3d⁵4s²",sh:[2,8,13,2],d:"Brittle metal essential for steel production. Important trace mineral in human nutrition."},
+  {z:26,s:"Fe",n:"Iron",c:"transition metal",p:4,g:8,m:"55.85",mp:"1538",bp:"2861",e:"[Ar]3d⁶4s²",sh:[2,8,14,2],d:"Most used metal in history. Core of steel. Carries oxygen in blood via hemoglobin. Earth's core is mostly iron."},
+  {z:27,s:"Co",n:"Cobalt",c:"transition metal",p:4,g:9,m:"58.93",mp:"1495",bp:"2927",e:"[Ar]3d⁷4s²",sh:[2,8,15,2],d:"Hard magnetic metal used in lithium-ion batteries, jet engine superalloys, and brilliant blue pigments."},
+  {z:28,s:"Ni",n:"Nickel",c:"transition metal",p:4,g:10,m:"58.69",mp:"1455",bp:"2913",e:"[Ar]3d⁸4s²",sh:[2,8,16,2],d:"Corrosion-resistant metal used in stainless steel, coins, magnets, and rechargeable batteries."},
+  {z:29,s:"Cu",n:"Copper",c:"transition metal",p:4,g:11,m:"63.55",mp:"1084.6",bp:"2562",e:"[Ar]3d¹⁰4s¹",sh:[2,8,18,1],d:"Excellent electrical conductor. One of the first metals used by humans. Essential for all electrical wiring."},
+  {z:30,s:"Zn",n:"Zinc",c:"transition metal",p:4,g:12,m:"65.38",mp:"419.5",bp:"907",e:"[Ar]3d¹⁰4s²",sh:[2,8,18,2],d:"Bluish-white metal used to galvanize steel against rust. Essential trace nutrient. Used in brass alloys."},
+  {z:31,s:"Ga",n:"Gallium",c:"post-transition metal",p:4,g:13,m:"69.72",mp:"29.76",bp:"2229",e:"[Ar]3d¹⁰4s²4p¹",sh:[2,8,18,3],d:"Soft metal that melts in your hand (29.8°C). Used in semiconductors, LEDs, and solar cells."},
+  {z:32,s:"Ge",n:"Germanium",c:"metalloid",p:4,g:14,m:"72.63",mp:"938.3",bp:"2833",e:"[Ar]3d¹⁰4s²4p²",sh:[2,8,18,4],d:"Semiconductor predicted by Mendeleev before discovery. Used in fiber optics and infrared optical devices."},
+  {z:33,s:"As",n:"Arsenic",c:"metalloid",p:4,g:15,m:"74.92",mp:"—",bp:"614",e:"[Ar]3d¹⁰4s²4p³",sh:[2,8,18,5],d:"Famous historic poison. Used as a semiconductor dopant, in wood preservatives, and some pharmaceuticals."},
+  {z:34,s:"Se",n:"Selenium",c:"nonmetal",p:4,g:16,m:"78.97",mp:"220.8",bp:"685",e:"[Ar]3d¹⁰4s²4p⁴",sh:[2,8,18,6],d:"Semiconductor nonmetal used in photocopiers, solar cells, and glassmaking. Essential trace element for health."},
+  {z:35,s:"Br",n:"Bromine",c:"halogen",p:4,g:17,m:"79.90",mp:"-7.3",bp:"58.8",e:"[Ar]3d¹⁰4s²4p⁵",sh:[2,8,18,7],d:"One of two liquid elements at room temperature. Used in flame retardants and historically in photography."},
+  {z:36,s:"Kr",n:"Krypton",c:"noble gas",p:4,g:18,m:"83.80",mp:"-157.4",bp:"-153.2",e:"[Ar]3d¹⁰4s²4p⁶",sh:[2,8,18,8],d:"Inert gas used in high-power lasers and specialized fluorescent lighting."},
+  {z:37,s:"Rb",n:"Rubidium",c:"alkali metal",p:5,g:1,m:"85.47",mp:"39.3",bp:"688",e:"[Kr]5s¹",sh:[2,8,18,8,1],d:"Soft highly reactive metal used in atomic clocks, photomultiplier tubes, and research."},
+  {z:38,s:"Sr",n:"Strontium",c:"alkaline earth metal",p:5,g:2,m:"87.62",mp:"777",bp:"1382",e:"[Kr]5s²",sh:[2,8,18,8,2],d:"Soft metal that burns brilliant red. Used in fireworks, signal flares, and historically in color TV tubes."},
+  {z:39,s:"Y",n:"Yttrium",c:"transition metal",p:5,g:3,m:"88.91",mp:"1522",bp:"3345",e:"[Kr]4d¹5s²",sh:[2,8,18,9,2],d:"Silvery metal used in LED phosphors, laser crystals, and high-temperature superconductors."},
+  {z:40,s:"Zr",n:"Zirconium",c:"transition metal",p:5,g:4,m:"91.22",mp:"1855",bp:"4409",e:"[Kr]4d²5s²",sh:[2,8,18,10,2],d:"Corrosion-resistant metal crucial in nuclear reactors. Also used in cubic zirconia diamond substitutes."},
+  {z:41,s:"Nb",n:"Niobium",c:"transition metal",p:5,g:5,m:"92.91",mp:"2477",bp:"4744",e:"[Kr]4d⁴5s¹",sh:[2,8,18,12,1],d:"Soft metal used in superconducting magnets for MRI machines and particle accelerators."},
+  {z:42,s:"Mo",n:"Molybdenum",c:"transition metal",p:5,g:6,m:"95.96",mp:"2623",bp:"4639",e:"[Kr]4d⁵5s¹",sh:[2,8,18,13,1],d:"High-melting metal essential in steel alloys for hardness. Catalyst in petroleum refining."},
+  {z:43,s:"Tc",n:"Technetium",c:"transition metal",p:5,g:7,m:"(98)",mp:"2157",bp:"4265",e:"[Kr]4d⁵5s²",sh:[2,8,18,13,2],d:"First artificially produced element. All isotopes are radioactive. Used in nuclear medicine imaging."},
+  {z:44,s:"Ru",n:"Ruthenium",c:"transition metal",p:5,g:8,m:"101.07",mp:"2334",bp:"4150",e:"[Kr]4d⁷5s¹",sh:[2,8,18,15,1],d:"Rare platinum-group metal used as a catalyst, in hard disk coatings, and to harden platinum."},
+  {z:45,s:"Rh",n:"Rhodium",c:"transition metal",p:5,g:9,m:"102.91",mp:"1964",bp:"3695",e:"[Kr]4d⁸5s¹",sh:[2,8,18,16,1],d:"One of the rarest elements. Used in catalytic converters and as a reflective coating on mirrors."},
+  {z:46,s:"Pd",n:"Palladium",c:"transition metal",p:5,g:10,m:"106.42",mp:"1555",bp:"2963",e:"[Kr]4d¹⁰",sh:[2,8,18,18],d:"Used in catalytic converters, electronics, jewelry, and for hydrogen purification."},
+  {z:47,s:"Ag",n:"Silver",c:"transition metal",p:5,g:11,m:"107.87",mp:"961.8",bp:"2162",e:"[Kr]4d¹⁰5s¹",sh:[2,8,18,18,1],d:"Best electrical and thermal conductor. Used in jewelry, photography, electronics, and antibacterial coatings."},
+  {z:48,s:"Cd",n:"Cadmium",c:"transition metal",p:5,g:12,m:"112.41",mp:"321.1",bp:"767",e:"[Kr]4d¹⁰5s²",sh:[2,8,18,18,2],d:"Toxic heavy metal used in nickel-cadmium batteries and as a neutron absorber in nuclear reactors."},
+  {z:49,s:"In",n:"Indium",c:"post-transition metal",p:5,g:13,m:"114.82",mp:"156.6",bp:"2072",e:"[Kr]4d¹⁰5s²5p¹",sh:[2,8,18,18,3],d:"Soft silvery metal critical for ITO coatings used in all touchscreens and flat-panel displays."},
+  {z:50,s:"Sn",n:"Tin",c:"post-transition metal",p:5,g:14,m:"118.71",mp:"231.9",bp:"2602",e:"[Kr]4d¹⁰5s²5p²",sh:[2,8,18,18,4],d:"Malleable metal used since ancient times in bronze. Used in solder, pewter, and food can coatings."},
+  {z:51,s:"Sb",n:"Antimony",c:"metalloid",p:5,g:15,m:"121.76",mp:"630.6",bp:"1587",e:"[Kr]4d¹⁰5s²5p³",sh:[2,8,18,18,5],d:"Brittle metalloid used in flame retardants, lead-acid batteries, and semiconductor devices."},
+  {z:52,s:"Te",n:"Tellurium",c:"metalloid",p:5,g:16,m:"127.60",mp:"449.5",bp:"988",e:"[Kr]4d¹⁰5s²5p⁴",sh:[2,8,18,18,6],d:"Rare metalloid used in solar cells (CdTe), thermoelectrics, and steel/copper alloys."},
+  {z:53,s:"I",n:"Iodine",c:"halogen",p:5,g:17,m:"126.90",mp:"113.7",bp:"184.4",e:"[Kr]4d¹⁰5s²5p⁵",sh:[2,8,18,18,7],d:"Shiny purple-black solid. Essential for thyroid hormones. Used in antiseptics and as a contrast agent."},
+  {z:54,s:"Xe",n:"Xenon",c:"noble gas",p:5,g:18,m:"131.29",mp:"-111.8",bp:"-108.1",e:"[Kr]4d¹⁰5s²5p⁶",sh:[2,8,18,18,8],d:"Heavy noble gas used in arc lamps, ion propulsion systems for spacecraft, and as an anesthetic."},
+  {z:55,s:"Cs",n:"Cesium",c:"alkali metal",p:6,g:1,m:"132.91",mp:"28.5",bp:"671",e:"[Xe]6s¹",sh:[2,8,18,18,8,1],d:"Defines the SI second. Atomic clocks based on cesium are accurate to one second in 300 million years."},
+  {z:56,s:"Ba",n:"Barium",c:"alkaline earth metal",p:6,g:2,m:"137.33",mp:"729",bp:"1870",e:"[Xe]6s²",sh:[2,8,18,18,8,2],d:"Heavy reactive metal. Barium sulfate swallowed as X-ray contrast agent to image the digestive system."},
+  {z:57,s:"La",n:"Lanthanum",c:"lanthanide",p:9,g:3,m:"138.91",mp:"920",bp:"3464",e:"[Xe]5d¹6s²",sh:[2,8,18,18,9,2],d:"First lanthanide. Used in camera lenses, studio lighting carbons, and hydrogen storage alloys."},
+  {z:58,s:"Ce",n:"Cerium",c:"lanthanide",p:9,g:4,m:"140.12",mp:"795",bp:"3443",e:"[Xe]4f¹5d¹6s²",sh:[2,8,18,19,9,2],d:"Most abundant lanthanide. Used as a polishing agent for glass, in catalytic converters, and lighters."},
+  {z:59,s:"Pr",n:"Praseodymium",c:"lanthanide",p:9,g:5,m:"140.91",mp:"935",bp:"3520",e:"[Xe]4f³6s²",sh:[2,8,18,21,8,2],d:"Soft metal used in high-strength magnets, aircraft engine alloys, and didymium glass for welding goggles."},
+  {z:60,s:"Nd",n:"Neodymium",c:"lanthanide",p:9,g:6,m:"144.24",mp:"1024",bp:"3074",e:"[Xe]4f⁴6s²",sh:[2,8,18,22,8,2],d:"Key in the strongest permanent magnets (Nd-Fe-B), essential for electric motors and wind turbines."},
+  {z:61,s:"Pm",n:"Promethium",c:"lanthanide",p:9,g:7,m:"(145)",mp:"1042",bp:"3000",e:"[Xe]4f⁵6s²",sh:[2,8,18,23,8,2],d:"Radioactive with no stable isotopes. Used in nuclear batteries and luminescent paint research."},
+  {z:62,s:"Sm",n:"Samarium",c:"lanthanide",p:9,g:8,m:"150.36",mp:"1072",bp:"1803",e:"[Xe]4f⁶6s²",sh:[2,8,18,24,8,2],d:"Used in samarium-cobalt permanent magnets for high-temperature applications and in cancer therapy."},
+  {z:63,s:"Eu",n:"Europium",c:"lanthanide",p:9,g:9,m:"152.00",mp:"826",bp:"1529",e:"[Xe]4f⁷6s²",sh:[2,8,18,25,8,2],d:"Used as a red/blue phosphor in TV screens and LED lights. Also in euro banknote security features."},
+  {z:64,s:"Gd",n:"Gadolinium",c:"lanthanide",p:9,g:10,m:"157.25",mp:"1313",bp:"3273",e:"[Xe]4f⁷5d¹6s²",sh:[2,8,18,25,9,2],d:"Used as an MRI contrast agent. Unique magnetic properties useful in nuclear reactor control rods."},
+  {z:65,s:"Tb",n:"Terbium",c:"lanthanide",p:9,g:11,m:"158.93",mp:"1356",bp:"3230",e:"[Xe]4f⁹6s²",sh:[2,8,18,27,8,2],d:"Used in solid-state devices, sonar systems, and as a green phosphor in fluorescent lamps."},
+  {z:66,s:"Dy",n:"Dysprosium",c:"lanthanide",p:9,g:12,m:"162.50",mp:"1407",bp:"2567",e:"[Xe]4f¹⁰6s²",sh:[2,8,18,28,8,2],d:"Used in high-performance magnets for electric vehicles and wind turbines."},
+  {z:67,s:"Ho",n:"Holmium",c:"lanthanide",p:9,g:13,m:"164.93",mp:"1461",bp:"2720",e:"[Xe]4f¹¹6s²",sh:[2,8,18,29,8,2],d:"Highest magnetic moment of any element. Used in high-powered magnets and medical laser surgery."},
+  {z:68,s:"Er",n:"Erbium",c:"lanthanide",p:9,g:14,m:"167.26",mp:"1529",bp:"2868",e:"[Xe]4f¹²6s²",sh:[2,8,18,30,8,2],d:"Critical in fiber-optic communications as a signal amplifier. Used in dermatology lasers."},
+  {z:69,s:"Tm",n:"Thulium",c:"lanthanide",p:9,g:15,m:"168.93",mp:"1545",bp:"1950",e:"[Xe]4f¹³6s²",sh:[2,8,18,31,8,2],d:"Rarest lanthanide. Used in portable X-ray devices and as a radiation source in medical imaging."},
+  {z:70,s:"Yb",n:"Ytterbium",c:"lanthanide",p:9,g:16,m:"173.05",mp:"824",bp:"1196",e:"[Xe]4f¹⁴6s²",sh:[2,8,18,32,8,2],d:"Used in the most accurate atomic clocks and as a dopant in fiber-optic amplifiers and laser materials."},
+  {z:71,s:"Lu",n:"Lutetium",c:"lanthanide",p:9,g:17,m:"174.97",mp:"1652",bp:"3402",e:"[Xe]4f¹⁴5d¹6s²",sh:[2,8,18,32,9,2],d:"Densest and hardest lanthanide. Used in PET scan detectors and as a catalyst in petroleum cracking."},
+  {z:72,s:"Hf",n:"Hafnium",c:"transition metal",p:6,g:4,m:"178.49",mp:"2233",bp:"4603",e:"[Xe]4f¹⁴5d²6s²",sh:[2,8,18,32,10,2],d:"Used in nuclear reactor control rods and in chip manufacturing as a gate dielectric."},
+  {z:73,s:"Ta",n:"Tantalum",c:"transition metal",p:6,g:5,m:"180.95",mp:"3017",bp:"5458",e:"[Xe]4f¹⁴5d³6s²",sh:[2,8,18,32,11,2],d:"Extremely corrosion-resistant. Used in capacitors for smartphones and as biologically inert implants."},
+  {z:74,s:"W",n:"Tungsten",c:"transition metal",p:6,g:6,m:"183.84",mp:"3422",bp:"5555",e:"[Xe]4f¹⁴5d⁴6s²",sh:[2,8,18,32,12,2],d:"Highest melting point of any metal (3422°C). Used in light bulb filaments, cutting tools, and armor-piercing rounds."},
+  {z:75,s:"Re",n:"Rhenium",c:"transition metal",p:6,g:7,m:"186.21",mp:"3186",bp:"5596",e:"[Xe]4f¹⁴5d⁵6s²",sh:[2,8,18,32,13,2],d:"One of the rarest elements. Second highest melting point. Used in jet engine superalloys."},
+  {z:76,s:"Os",n:"Osmium",c:"transition metal",p:6,g:8,m:"190.23",mp:"3033",bp:"5012",e:"[Xe]4f¹⁴5d⁶6s²",sh:[2,8,18,32,14,2],d:"Densest naturally occurring element. Used to harden platinum for pen tips and electrical contacts."},
+  {z:77,s:"Ir",n:"Iridium",c:"transition metal",p:6,g:9,m:"192.22",mp:"2446",bp:"4428",e:"[Xe]4f¹⁴5d⁷6s²",sh:[2,8,18,32,15,2],d:"Most corrosion-resistant metal. Iridium anomaly in rock layers marks the K-Pg mass extinction event."},
+  {z:78,s:"Pt",n:"Platinum",c:"transition metal",p:6,g:10,m:"195.08",mp:"1768.4",bp:"3825",e:"[Xe]4f¹⁴5d⁹6s¹",sh:[2,8,18,32,17,1],d:"Precious metal resistant to all corrosion. Used in catalytic converters, jewelry, and cancer treatment (cisplatin)."},
+  {z:79,s:"Au",n:"Gold",c:"transition metal",p:6,g:11,m:"196.97",mp:"1064.2",bp:"2856",e:"[Xe]4f¹⁴5d¹⁰6s¹",sh:[2,8,18,32,18,1],d:"Highly prized precious metal. Excellent conductor, completely unreactive. Used in jewelry, electronics, and currency."},
+  {z:80,s:"Hg",n:"Mercury",c:"transition metal",p:6,g:12,m:"200.59",mp:"-38.8",bp:"356.6",e:"[Xe]4f¹⁴5d¹⁰6s²",sh:[2,8,18,32,18,2],d:"Only liquid metal at room temperature. Toxic. Used in thermometers, fluorescent lights, and dental fillings."},
+  {z:81,s:"Tl",n:"Thallium",c:"post-transition metal",p:6,g:13,m:"204.38",mp:"304",bp:"1473",e:"[Xe]4f¹⁴5d¹⁰6s²6p¹",sh:[2,8,18,32,18,3],d:"Toxic heavy metal used in infrared detectors and heart perfusion medical imaging tests."},
+  {z:82,s:"Pb",n:"Lead",c:"post-transition metal",p:6,g:14,m:"207.2",mp:"327.5",bp:"1749",e:"[Xe]4f¹⁴5d¹⁰6s²6p²",sh:[2,8,18,32,18,4],d:"Heavy toxic metal used in batteries and radiation shielding. Symbol Pb from Latin plumbum (pipes)."},
+  {z:83,s:"Bi",n:"Bismuth",c:"post-transition metal",p:6,g:15,m:"208.98",mp:"271.5",bp:"1564",e:"[Xe]4f¹⁴5d¹⁰6s²6p³",sh:[2,8,18,32,18,5],d:"Colorful crystalline metal in Pepto-Bismol. Forms beautiful iridescent crystals. Least toxic heavy metal."},
+  {z:84,s:"Po",n:"Polonium",c:"post-transition metal",p:6,g:16,m:"(209)",mp:"254",bp:"962",e:"[Xe]4f¹⁴5d¹⁰6s²6p⁴",sh:[2,8,18,32,18,6],d:"Radioactive element discovered by Marie Curie. Used in anti-static devices and as a neutron source."},
+  {z:85,s:"At",n:"Astatine",c:"halogen",p:6,g:17,m:"(210)",mp:"302",bp:"337",e:"[Xe]4f¹⁴5d¹⁰6s²6p⁵",sh:[2,8,18,32,18,7],d:"Rarest naturally occurring element. Radioactive halogen. Promising for targeted cancer radiotherapy."},
+  {z:86,s:"Rn",n:"Radon",c:"noble gas",p:6,g:18,m:"(222)",mp:"-71.2",bp:"-61.7",e:"[Xe]4f¹⁴5d¹⁰6s²6p⁶",sh:[2,8,18,32,18,8],d:"Radioactive noble gas from uranium decay. Significant lung cancer risk when trapped in buildings."},
+  {z:87,s:"Fr",n:"Francium",c:"alkali metal",p:7,g:1,m:"(223)",mp:"27",bp:"677",e:"[Rn]7s¹",sh:[2,8,18,32,18,8,1],d:"Second rarest naturally occurring element. Highly radioactive. Used only in scientific research."},
+  {z:88,s:"Ra",n:"Radium",c:"alkaline earth metal",p:7,g:2,m:"(226)",mp:"700",bp:"1737",e:"[Rn]7s²",sh:[2,8,18,32,18,8,2],d:"Radioactive element discovered by Marie Curie. Historically in luminous paints. Now in cancer therapy."},
+  {z:89,s:"Ac",n:"Actinium",c:"actinide",p:10,g:3,m:"(227)",mp:"1050",bp:"3198",e:"[Rn]6d¹7s²",sh:[2,8,18,32,18,9,2],d:"Gives the actinide series its name. Radioactive. Used as neutron source and in cancer treatment."},
+  {z:90,s:"Th",n:"Thorium",c:"actinide",p:10,g:4,m:"232.04",mp:"1750",bp:"4820",e:"[Rn]6d²7s²",sh:[2,8,18,32,18,10,2],d:"Weakly radioactive metal proposed as a safer, more abundant alternative to uranium as nuclear fuel."},
+  {z:91,s:"Pa",n:"Protactinium",c:"actinide",p:10,g:5,m:"231.04",mp:"1572",bp:"4000",e:"[Rn]5f²6d¹7s²",sh:[2,8,18,32,20,9,2],d:"Rare radioactive metal and intermediate in the decay of uranium-235."},
+  {z:92,s:"U",n:"Uranium",c:"actinide",p:10,g:6,m:"238.03",mp:"1135",bp:"4131",e:"[Rn]5f³6d¹7s²",sh:[2,8,18,32,21,9,2],d:"Radioactive metal used as fuel in nuclear reactors and in nuclear weapons. Occurs naturally in rock."},
+  {z:93,s:"Np",n:"Neptunium",c:"actinide",p:10,g:7,m:"(237)",mp:"644",bp:"4000",e:"[Rn]5f⁴6d¹7s²",sh:[2,8,18,32,22,9,2],d:"First transuranic element. Used in neutron detection instruments and to produce plutonium-238."},
+  {z:94,s:"Pu",n:"Plutonium",c:"actinide",p:10,g:8,m:"(244)",mp:"640",bp:"3228",e:"[Rn]5f⁶7s²",sh:[2,8,18,32,24,8,2],d:"Fissile material used in nuclear weapons and reactors. Extremely toxic and radioactive."},
+  {z:95,s:"Am",n:"Americium",c:"actinide",p:10,g:9,m:"(243)",mp:"1176",bp:"2011",e:"[Rn]5f⁷7s²",sh:[2,8,18,32,25,8,2],d:"The radioactive source in most household smoke detectors. Am-241 emits alpha particles."},
+  {z:96,s:"Cm",n:"Curium",c:"actinide",p:10,g:10,m:"(247)",mp:"1340",bp:"3110",e:"[Rn]5f⁷6d¹7s²",sh:[2,8,18,32,25,9,2],d:"Named after Marie and Pierre Curie. Intense heat from decay used as power source in space probes."},
+  {z:97,s:"Bk",n:"Berkelium",c:"actinide",p:10,g:11,m:"(247)",mp:"986",bp:"—",e:"[Rn]5f⁹7s²",sh:[2,8,18,32,27,8,2],d:"Named after Berkeley, California. Synthetic element with no practical applications outside research."},
+  {z:98,s:"Cf",n:"Californium",c:"actinide",p:10,g:12,m:"(251)",mp:"900",bp:"—",e:"[Rn]5f¹⁰7s²",sh:[2,8,18,32,28,8,2],d:"Powerful neutron emitter. Used as a neutron source for starting nuclear reactors and cancer treatment."},
+  {z:99,s:"Es",n:"Einsteinium",c:"actinide",p:10,g:13,m:"(252)",mp:"860",bp:"—",e:"[Rn]5f¹¹7s²",sh:[2,8,18,32,29,8,2],d:"Named after Einstein. First found in debris of the 1952 hydrogen bomb test. Only research use."},
+  {z:100,s:"Fm",n:"Fermium",c:"actinide",p:10,g:14,m:"(257)",mp:"1527",bp:"—",e:"[Rn]5f¹²7s²",sh:[2,8,18,32,30,8,2],d:"Named after Enrico Fermi. Synthetic with no practical applications outside nuclear research."},
+  {z:101,s:"Md",n:"Mendelevium",c:"actinide",p:10,g:15,m:"(258)",mp:"827",bp:"—",e:"[Rn]5f¹³7s²",sh:[2,8,18,32,31,8,2],d:"Named after Dmitri Mendeleev. Extremely difficult to produce; studied for nuclear research only."},
+  {z:102,s:"No",n:"Nobelium",c:"actinide",p:10,g:16,m:"(259)",mp:"827",bp:"—",e:"[Rn]5f¹⁴7s²",sh:[2,8,18,32,32,8,2],d:"Named after Alfred Nobel. Synthetic transuranic element produced in tiny amounts. No practical use."},
+  {z:103,s:"Lr",n:"Lawrencium",c:"actinide",p:10,g:17,m:"(266)",mp:"1627",bp:"—",e:"[Rn]5f¹⁴7s²7p¹",sh:[2,8,18,32,32,8,3],d:"Last actinide. Named after Ernest Lawrence, inventor of the cyclotron. Only produced in tiny amounts."},
+  {z:104,s:"Rf",n:"Rutherfordium",c:"transition metal",p:7,g:4,m:"(267)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d²7s²",sh:[2,8,18,32,32,10,2],d:"First transactinide. Named after Ernest Rutherford. Only produced in tiny amounts for research."},
+  {z:105,s:"Db",n:"Dubnium",c:"transition metal",p:7,g:5,m:"(268)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d³7s²",sh:[2,8,18,32,32,11,2],d:"Named after Dubna, Russia. Synthetic superheavy element with no known applications."},
+  {z:106,s:"Sg",n:"Seaborgium",c:"transition metal",p:7,g:6,m:"(269)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d⁴7s²",sh:[2,8,18,32,32,12,2],d:"Named after Glenn T. Seaborg. Synthetic with no practical applications outside physics research."},
+  {z:107,s:"Bh",n:"Bohrium",c:"transition metal",p:7,g:7,m:"(270)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d⁵7s²",sh:[2,8,18,32,32,13,2],d:"Named after Niels Bohr. Produced a few atoms at a time in particle accelerators."},
+  {z:108,s:"Hs",n:"Hassium",c:"transition metal",p:7,g:8,m:"(269)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d⁶7s²",sh:[2,8,18,32,32,14,2],d:"Named after Hesse, Germany. Chemically similar to osmium. Only a few atoms ever created."},
+  {z:109,s:"Mt",n:"Meitnerium",c:"transition metal",p:7,g:9,m:"(278)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d⁷7s²",sh:[2,8,18,32,32,15,2],d:"Named after Lise Meitner. Too short-lived for practical use; properties predicted by theory."},
+  {z:110,s:"Ds",n:"Darmstadtium",c:"transition metal",p:7,g:10,m:"(281)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d⁹7s¹",sh:[2,8,18,32,32,17,1],d:"Named after Darmstadt, Germany. Extremely short-lived; detected only in particle accelerators."},
+  {z:111,s:"Rg",n:"Roentgenium",c:"transition metal",p:7,g:11,m:"(282)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d¹⁰7s¹",sh:[2,8,18,32,32,18,1],d:"Named after Wilhelm Röntgen, discoverer of X-rays. Extremely unstable; no known applications."},
+  {z:112,s:"Cn",n:"Copernicium",c:"transition metal",p:7,g:12,m:"(285)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d¹⁰7s²",sh:[2,8,18,32,32,18,2],d:"Named after Copernicus. Predicted to be a gas at room temperature due to relativistic effects."},
+  {z:113,s:"Nh",n:"Nihonium",c:"post-transition metal",p:7,g:13,m:"(286)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d¹⁰7s²7p¹",sh:[2,8,18,32,32,18,3],d:"Named after Japan (Nihon in Japanese). First element discovered in Asia."},
+  {z:114,s:"Fl",n:"Flerovium",c:"post-transition metal",p:7,g:14,m:"(289)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d¹⁰7s²7p²",sh:[2,8,18,32,32,18,4],d:"May behave more like a noble gas than a metal due to relativistic effects on its electrons."},
+  {z:115,s:"Mc",n:"Moscovium",c:"post-transition metal",p:7,g:15,m:"(290)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d¹⁰7s²7p³",sh:[2,8,18,32,32,18,5],d:"Named after Moscow Oblast. Synthesized in 2003. Decays within milliseconds."},
+  {z:116,s:"Lv",n:"Livermorium",c:"post-transition metal",p:7,g:16,m:"(293)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d¹⁰7s²7p⁴",sh:[2,8,18,32,32,18,6],d:"Named after Lawrence Livermore National Laboratory. Extremely unstable with millisecond half-life."},
+  {z:117,s:"Ts",n:"Tennessine",c:"halogen",p:7,g:17,m:"(294)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d¹⁰7s²7p⁵",sh:[2,8,18,32,32,18,7],d:"Named after Tennessee. Second-heaviest element confirmed. Classified as halogen, properties theoretical."},
+  {z:118,s:"Og",n:"Oganesson",c:"noble gas",p:7,g:18,m:"(294)",mp:"—",bp:"—",e:"[Rn]5f¹⁴6d¹⁰7s²7p⁶",sh:[2,8,18,32,32,18,8],d:"Heaviest known element. May actually be a solid at room temperature due to relativistic effects."},
+];
+
+const byZ = {};
+ELS.forEach(e => byZ[e.z] = e);
+
+let tableFilter = null;
+let tableSearch = "";
+let quizMode = "mc";
+let quizQType = "name-from-sym";
+let quizCats = new Set(Object.keys(CATS));
+let quizQ = [], quizIdx = 0, quizScore = 0, totalPts = 0;
+let flashDeck = [], flashIdx = 0, flashKnown = new Set();
+let flashCat = "all";
+let refSort = {key:"z", asc:true};
+
+// ---- NAV ----
+function goPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelector(`[data-page="${id}"]`)?.classList.add('active');
+  if(id === 'flash') initFlash();
+  if(id === 'ref') renderRef();
+}
+
+// ---- PERIODIC TABLE ----
+function catColor(cat) { return CATS[cat]?.color || '#888'; }
+function catLabel(cat) { return CATS[cat]?.label || cat; }
+
+function buildFilterPills() {
+  const cont = document.getElementById('filter-pills');
+  cont.innerHTML = '';
+  Object.entries(CATS).forEach(([key, val]) => {
+    const p = document.createElement('div');
+    p.className = 'pill';
+    p.style.cssText = `background:${val.color}22;color:${val.color};border-color:${val.color}44`;
+    p.textContent = val.label;
+    p.dataset.cat = key;
+    p.onclick = () => {
+      tableFilter = (tableFilter === key) ? null : key;
+      document.querySelectorAll('.pill').forEach(x => x.classList.toggle('active', x.dataset.cat === tableFilter));
+      renderTable();
+    };
+    cont.appendChild(p);
+  });
+}
+
+const LAYOUT = [];
+for(let r=1;r<=7;r++) for(let c=1;c<=18;c++) LAYOUT.push({row:r,col:c,z:null});
+ELS.forEach(e => {
+  if(e.p <= 7) {
+    const spot = LAYOUT.find(l => l.row===e.p && l.col===e.g && l.z===null);
+    if(spot) spot.z = e.z;
+  }
+});
+
+function renderTable() {
+  const grid = document.getElementById('pt-grid');
+  grid.innerHTML = '';
+  const q = tableSearch.toLowerCase();
+  const matches = el => {
+    const catOk = !tableFilter || el.c === tableFilter;
+    const searchOk = !q || el.n.toLowerCase().includes(q) || el.s.toLowerCase().includes(q) || String(el.z) === q;
+    return catOk && searchOk;
+  };
+
+  for(let r=1;r<=7;r++) {
+    for(let c=1;c<=18;c++) {
+      const spot = LAYOUT.find(l=>l.row===r&&l.col===c);
+      if((r===6||r===7) && c===3) {
+        const ref = document.createElement('div');
+        ref.className = 'el-ref';
+        ref.style.cssText = `background:${r===6?CATS['lanthanide'].color:CATS['actinide'].color}33;color:${r===6?CATS['lanthanide'].color:CATS['actinide'].color};font-size:8px;aspect-ratio:1;`;
+        ref.textContent = r===6?'57–71':'89–103';
+        grid.appendChild(ref);
+        continue;
+      }
+      if(!spot || !spot.z) {
+        const ph = document.createElement('div'); ph.style.aspectRatio='1'; grid.appendChild(ph); continue;
+      }
+      const el = byZ[spot.z];
+      const cell = document.createElement('div');
+      cell.className = 'el-cell' + (matches(el)?'':' dimmed');
+      cell.style.background = catColor(el.c);
+      cell.innerHTML = `<span class="z">${el.z}</span><span class="sym">${el.s}</span><span class="nm">${el.n}</span>`;
+      cell.onclick = () => openPanel(el);
+      grid.appendChild(cell);
+    }
+  }
+
+  // Lanthanide row
+  const lr = document.createElement('div');
+  lr.className = 'series-row';
+  const lsp = document.createElement('div'); lsp.style.gridColumn='1/4'; lsp.className='series-label'; lsp.textContent='La–Lu';
+  lr.appendChild(lsp);
+  for(let g=4;g<=18;g++) {
+    const el = ELS.find(e=>e.p===9&&e.g===g);
+    if(el) {
+      const cell = document.createElement('div');
+      cell.className = 'el-cell' + (matches(el)?'':' dimmed');
+      cell.style.background = catColor(el.c);
+      cell.innerHTML = `<span class="z">${el.z}</span><span class="sym">${el.s}</span><span class="nm">${el.n}</span>`;
+      cell.onclick = () => openPanel(el);
+      lr.appendChild(cell);
+    } else { lr.appendChild(document.createElement('div')); }
+  }
+  grid.appendChild(lr);
+
+  // Actinide row
+  const ar = document.createElement('div');
+  ar.className = 'series-row';
+  const asp = document.createElement('div'); asp.style.gridColumn='1/4'; asp.className='series-label'; asp.textContent='Ac–Lr';
+  ar.appendChild(asp);
+  for(let g=4;g<=18;g++) {
+    const el = ELS.find(e=>e.p===10&&e.g===g);
+    if(el) {
+      const cell = document.createElement('div');
+      cell.className = 'el-cell' + (matches(el)?'':' dimmed');
+      cell.style.background = catColor(el.c);
+      cell.innerHTML = `<span class="z">${el.z}</span><span class="sym">${el.s}</span><span class="nm">${el.n}</span>`;
+      cell.onclick = () => openPanel(el);
+      ar.appendChild(cell);
+    } else { ar.appendChild(document.createElement('div')); }
+  }
+  grid.appendChild(ar);
+}
+
+function filterTable() {
+  tableSearch = document.getElementById('table-search').value;
+  renderTable();
+}
+
+// ---- PANEL ----
+function openPanel(el) {
+  const color = catColor(el.c);
+  const label = catLabel(el.c);
+  document.getElementById('el-panel-content').innerHTML = `
+    <div class="panel-hero">
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <div class="panel-sym-block" style="background:${color}">
+          <span class="p-z">${el.z}</span>
+          <span class="p-s">${el.s}</span>
+          <span class="p-m">${el.m}</span>
+        </div>
+        <div>
+          <div class="panel-name">${el.n}</div>
+          <span class="panel-cat" style="background:${color}22;color:${color}">${label}</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="prop-grid">
+        <div class="prop-item"><div class="prop-label">Atomic #</div><div class="prop-val">${el.z}</div></div>
+        <div class="prop-item"><div class="prop-label">Atomic Mass</div><div class="prop-val">${el.m} u</div></div>
+        <div class="prop-item"><div class="prop-label">Melting Point</div><div class="prop-val">${el.mp}°C</div></div>
+        <div class="prop-item"><div class="prop-label">Boiling Point</div><div class="prop-val">${el.bp}°C</div></div>
+        <div class="prop-item" style="grid-column:1/-1"><div class="prop-label">Electron Config.</div><div class="prop-val" style="font-size:0.8rem">${el.e}</div></div>
+      </div>
+      <div class="panel-desc">${el.d}</div>
+      <button class="study-btn" onclick="showElementDetail(${el.z})">View Full Details →</button>
+    </div>
+  `;
+  document.getElementById('el-panel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('el-panel').classList.remove('open');
+}
+
+// ---- ELEMENT DETAIL ----
+function showElementDetail(z) {
+  const el = byZ[z];
+  const color = catColor(el.c);
+  const label = catLabel(el.c);
+  const uses = CATS[el.c]?.uses || [];
+  const shellStr = el.sh.map((e,i) => `<div class="shell"><div class="shell-n">n=${i+1}</div><div class="shell-e">${e}e⁻</div></div>`).join('');
+
+  document.getElementById('el-detail-content').innerHTML = `
+    <div class="el-breadcrumb" onclick="goBack()">← Back to Periodic Table</div>
+    <div class="el-hero">
+      <div class="el-hero-sym" style="background:${color}">
+        <span class="ehz">${el.z}</span>
+        <span class="ehs">${el.s}</span>
+        <span class="ehm">${el.m} u</span>
+      </div>
+      <div class="el-hero-info">
+        <h1>${el.n}</h1>
+        <span class="el-cat" style="background:${color}22;color:${color}">${label}</span>
+        <p>${el.d}</p>
+      </div>
+    </div>
+    <div class="el-props-grid">
+      <div class="el-prop-card"><div class="label">Atomic Number</div><div class="val">${el.z}</div></div>
+      <div class="el-prop-card"><div class="label">Atomic Mass</div><div class="val">${el.m} <span class="unit">u</span></div></div>
+      <div class="el-prop-card"><div class="label">Period</div><div class="val">${el.p <= 8 ? el.p : el.p===9 ? 6 : 7}</div></div>
+      <div class="el-prop-card"><div class="label">Group</div><div class="val">${el.g}</div></div>
+      <div class="el-prop-card"><div class="label">Melting Point</div><div class="val">${el.mp} <span class="unit">°C</span></div></div>
+      <div class="el-prop-card"><div class="label">Boiling Point</div><div class="val">${el.bp} <span class="unit">°C</span></div></div>
+    </div>
+    <div class="el-section">
+      <h2>Electron Configuration</h2>
+      <div class="el-config">${el.e}</div>
+    </div>
+    <div class="el-section">
+      <h2>Electron Shells</h2>
+      <div class="electron-shells">${shellStr}</div>
+    </div>
+    <div class="el-section">
+      <h2>Common Applications</h2>
+      <div class="uses-list">${uses.map(u=>`<span class="use-tag">${u}</span>`).join('')}</div>
+    </div>
+  `;
+  closePanel();
+  goPage('element');
+}
+
+function goBack() { goPage('table'); }
+
+// ---- QUIZ ----
+function selectMode(m) {
+  quizMode = m;
+  document.querySelectorAll('[data-mode]').forEach(c => c.classList.toggle('selected', c.dataset.mode === m));
+}
+
+function selectQType(el) {
+  quizQType = el.dataset.qtype;
+  document.querySelectorAll('[data-qtype]').forEach(c => c.classList.toggle('selected', c === el));
+}
+
+function buildQuizCats() {
+  const cont = document.getElementById('quiz-cats');
+  cont.innerHTML = '';
+  Object.entries(CATS).forEach(([key, val]) => {
+    const div = document.createElement('label');
+    div.className = 'cat-check checked';
+    div.innerHTML = `<input type="checkbox" checked data-cat="${key}"><div class="cat-dot" style="background:${val.color}"></div>${val.label}`;
+    div.querySelector('input').onchange = e => {
+      if(e.target.checked) quizCats.add(key); else quizCats.delete(key);
+      div.classList.toggle('checked', e.target.checked);
+    };
+    cont.appendChild(div);
+  });
+}
+
+function startQuiz() {
+  const pool = ELS.filter(e => quizCats.has(e.c));
+  if(pool.length < 4) { alert('Select at least 4 categories'); return; }
+  const shuffled = [...pool].sort(() => Math.random()-0.5).slice(0, Math.min(15, pool.length));
+  quizQ = shuffled;
+  quizIdx = 0; quizScore = 0; totalPts = quizQ.length;
+  document.getElementById('quiz-setup-view').style.display = 'none';
+  document.getElementById('quiz-active-view').style.display = 'block';
+  document.getElementById('quiz-results-view').style.display = 'none';
+  document.getElementById('quiz-score-nav').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  if(quizIdx >= quizQ.length) { showResults(); return; }
+  const el = quizQ[quizIdx];
+  const color = catColor(el.c);
+  const pct = Math.round((quizIdx/quizQ.length)*100);
+  document.getElementById('q-progress-fill').style.width = pct + '%';
+  document.getElementById('q-progress-text').textContent = `${quizIdx} / ${quizQ.length}`;
+  document.getElementById('q-score-display').textContent = quizScore + ' pts';
+  document.getElementById('quiz-score-nav').textContent = quizScore + ' pts';
+  document.getElementById('feedback-bar').className = 'feedback-bar';
+  document.getElementById('next-btn').className = 'next-btn';
+
+  let html = '';
+  if(quizQType === 'name-from-sym') {
+    html = buildQuestion(`What element has the symbol <strong style="color:${color}">${el.s}</strong>?`,
+      el, 'n', buildOptions(el, 'n'));
+  } else if(quizQType === 'sym-from-name') {
+    html = buildQuestion(`What is the symbol for <strong style="color:${color}">${el.n}</strong>?`,
+      el, 's', buildOptions(el, 's'));
+  } else if(quizQType === 'num-from-name') {
+    html = buildQuestion(`What is the atomic number of <strong style="color:${color}">${el.n}</strong>?`,
+      el, 'z', buildOptions(el, 'z'));
+  } else if(quizQType === 'cat-from-name') {
+    html = buildQuestion(`What category is <strong style="color:${color}">${el.n}</strong>?`,
+      el, 'c', buildOptions(el, 'c'));
+  }
+  document.getElementById('question-card').innerHTML = html;
+
+  if(quizMode === 'type') {
+    document.getElementById('q-ans-input')?.addEventListener('keydown', e => {
+      if(e.key === 'Enter') checkTyped(el);
+    });
+  }
+}
+
+function buildQuestion(prompt, el, field, opts) {
+  const color = catColor(el.c);
+  let symBlock = `<div class="q-element-display">
+    <div class="q-sym-box" style="background:${color}">
+      <span class="qsz">${el.z}</span>
+      <span class="qss">${el.s}</span>
+    </div>
+    <div>
+      <div style="font-size:0.75rem;color:var(--text3);margin-bottom:2px">Period ${el.p <= 8 ? el.p : el.p===9?6:7} · Group ${el.g}</div>
+    </div>
+  </div>`;
+
+  if(quizQType !== 'name-from-sym') symBlock = '';
+
+  if(quizMode === 'mc') {
+    const btns = opts.map(o => `<button class="opt-btn" onclick="checkAnswer(this,'${String(o).replace(/'/g,"\\'")}','${String(el[field]).replace(/'/g,"\\'")}',${el.z})">${o}</button>`).join('');
+    return `<div class="q-prompt">Question ${quizIdx+1} of ${quizQ.length}</div>
+    ${symBlock}<div class="q-text">${prompt}</div>
+    <div class="options-grid" style="margin-top:1.25rem">${btns}</div>`;
+  } else {
+    return `<div class="q-prompt">Question ${quizIdx+1} of ${quizQ.length}</div>
+    ${symBlock}<div class="q-text">${prompt}</div>
+    <div class="options-grid" style="margin-top:1.25rem">
+      <div class="q-input-wrap">
+        <input type="text" id="q-ans-input" placeholder="Type your answer…" autocomplete="off">
+        <button onclick="checkTyped(byZ[${el.z}])">Check</button>
+      </div>
+    </div>`;
+  }
+}
+
+function buildOptions(el, field) {
+  const same = ELS.filter(e => e.z !== el.z);
+  const wrong = same.sort(()=>Math.random()-0.5).slice(0,3).map(e => e[field]);
+  const all = [el[field], ...wrong].sort(()=>Math.random()-0.5);
+  return all.map(v => field==='c' ? catLabel(v) : v);
+}
+
+function checkAnswer(btn, chosen, correct, z) {
+  const el = byZ[z];
+  const isCorrect = chosen === correct || chosen === catLabel(correct);
+  document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+  if(isCorrect) {
+    btn.classList.add('correct');
+    quizScore++;
+    showFeedback(true, `Correct! ${el.n} (${el.s}) — ${catLabel(el.c)}`);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.opt-btn').forEach(b => {
+      if(b.textContent === correct || b.textContent === catLabel(correct)) b.classList.add('correct');
+    });
+    showFeedback(false, `Not quite. The answer is: ${correct === catLabel(correct) ? correct : correct}`);
+  }
+  document.getElementById('next-btn').className = 'next-btn show';
+}
+
+function checkTyped(el) {
+  const inp = document.getElementById('q-ans-input');
+  const val = inp.value.trim().toLowerCase();
+  let correct = '';
+  if(quizQType==='name-from-sym') correct = el.n.toLowerCase();
+  else if(quizQType==='sym-from-name') correct = el.s.toLowerCase();
+  else if(quizQType==='num-from-name') correct = String(el.z);
+  else if(quizQType==='cat-from-name') correct = catLabel(el.c).toLowerCase();
+
+  if(val === correct || val === String(el.z)) {
+    quizScore++;
+    showFeedback(true, `Correct! ${el.n} (${el.s}) — ${catLabel(el.c)}`);
+  } else {
+    showFeedback(false, `Not quite. Correct answer: ${correct}`);
+  }
+  inp.disabled = true;
+  document.querySelector('.q-input-wrap button').disabled = true;
+  document.getElementById('next-btn').className = 'next-btn show';
+}
+
+function showFeedback(ok, msg) {
+  const fb = document.getElementById('feedback-bar');
+  fb.className = 'feedback-bar show ' + (ok?'correct':'wrong');
+  fb.textContent = (ok ? '✓ ' : '✗ ') + msg;
+}
+
+function nextQuestion() {
+  quizIdx++;
+  renderQuestion();
+}
+
+function showResults() {
+  document.getElementById('quiz-active-view').style.display = 'none';
+  const rv = document.getElementById('quiz-results-view');
+  rv.style.display = 'block';
+  const pct = Math.round((quizScore/quizQ.length)*100);
+  document.getElementById('result-pct').textContent = pct + '%';
+  const ring = document.getElementById('result-ring');
+  ring.style.background = `conic-gradient(var(--accent) ${pct*3.6}deg, var(--surface2) 0deg)`;
+  const msgs = [[90,'Outstanding!','You really know your elements.'],[70,'Nice work!','Solid knowledge — keep it up.'],[50,'Good effort','Review the tricky ones and try again.'],[0,'Keep studying','Flashcards can help — give them a try!']];
+  const [,msg,sub] = msgs.find(([t])=>pct>=t);
+  document.getElementById('result-msg').textContent = msg;
+  document.getElementById('result-sub').textContent = `${quizScore} / ${quizQ.length} correct — ${sub}`;
+}
+
+function showQuizSetup() {
+  document.getElementById('quiz-setup-view').style.display = 'block';
+  document.getElementById('quiz-active-view').style.display = 'none';
+  document.getElementById('quiz-results-view').style.display = 'none';
+}
+
+// ---- FLASHCARDS ----
+function initFlash() {
+  buildDeckSelector();
+  loadDeck();
+}
+
+function buildDeckSelector() {
+  const cont = document.getElementById('deck-selector');
+  cont.innerHTML = '';
+  const all = document.createElement('button');
+  all.className = 'deck-btn active';
+  all.textContent = 'All Elements';
+  all.onclick = () => { flashCat='all'; document.querySelectorAll('.deck-btn').forEach(b=>b.classList.toggle('active',b===all)); loadDeck(); };
+  cont.appendChild(all);
+  Object.entries(CATS).forEach(([key, val]) => {
+    const btn = document.createElement('button');
+    btn.className = 'deck-btn';
+    btn.textContent = val.label;
+    btn.onclick = () => {
+      flashCat = key;
+      document.querySelectorAll('.deck-btn').forEach(b => b.classList.toggle('active', b===btn));
+      loadDeck();
+    };
+    cont.appendChild(btn);
+  });
+}
+
+function loadDeck() {
+  flashDeck = flashCat === 'all' ? [...ELS] : ELS.filter(e => e.c === flashCat);
+  flashDeck = flashDeck.sort(()=>Math.random()-0.5);
+  flashIdx = 0;
+  flashKnown = new Set();
+  showFlashCard();
+}
+
+function showFlashCard() {
+  if(!flashDeck.length) return;
+  const el = flashDeck[flashIdx];
+  const color = catColor(el.c);
+  document.getElementById('fc-sym').textContent = el.s;
+  document.getElementById('fc-sym').style.color = color;
+  document.getElementById('fc-num').textContent = '#' + el.z;
+  document.getElementById('fc-name').textContent = el.n;
+  const catDiv = document.getElementById('fc-cat');
+  catDiv.textContent = catLabel(el.c);
+  catDiv.style.cssText = `background:${color}22;color:${color};padding:4px 12px;border-radius:20px;font-weight:500;`;
+  document.getElementById('fc-fact').textContent = el.d.split('.')[0] + '.';
+  document.getElementById('card-inner').classList.remove('flipped');
+  document.getElementById('flash-count').textContent = `${flashIdx+1} / ${flashDeck.length}`;
+  document.getElementById('flash-known-count').textContent = flashKnown.size + ' known';
+}
+
+function flipCard() { document.getElementById('card-inner').classList.toggle('flipped'); }
+function nextCard() { flashIdx = (flashIdx+1) % flashDeck.length; showFlashCard(); }
+function prevCard() { flashIdx = (flashIdx-1+flashDeck.length) % flashDeck.length; showFlashCard(); }
+function markCard(known) {
+  const el = flashDeck[flashIdx];
+  if(known) flashKnown.add(el.z); else flashKnown.delete(el.z);
+  nextCard();
+}
+
+// ---- REFERENCE TABLE ----
+let refData = [...ELS];
+function renderRef() {
+  filterRef();
+}
+
+function filterRef() {
+  const q = document.getElementById('ref-search').value.toLowerCase();
+  refData = ELS.filter(e =>
+    !q || e.n.toLowerCase().includes(q) || e.s.toLowerCase().includes(q) ||
+    String(e.z) === q || catLabel(e.c).toLowerCase().includes(q)
+  );
+  sortAndRenderRef();
+}
+
+function sortRef(key) {
+  if(refSort.key === key) refSort.asc = !refSort.asc;
+  else { refSort.key = key; refSort.asc = true; }
+  document.querySelectorAll('th').forEach(t => t.classList.remove('sorted'));
+  document.getElementById('th-'+key)?.classList.add('sorted');
+  sortAndRenderRef();
+}
+
+function sortAndRenderRef() {
+  const sorted = [...refData].sort((a,b) => {
+    let av = a[refSort.key], bv = b[refSort.key];
+    if(refSort.key==='z'||refSort.key==='mass') { av=parseFloat(av)||0; bv=parseFloat(bv)||0; }
+    else if(refSort.key==='mp'||refSort.key==='bp') { av=parseFloat(av)||9999; bv=parseFloat(bv)||9999; }
+    else { av=String(av).toLowerCase(); bv=String(bv).toLowerCase(); }
+    return refSort.asc ? (av>bv?1:-1) : (av<bv?1:-1);
+  });
+
+  const tbody = document.getElementById('ref-tbody');
+  tbody.innerHTML = sorted.map(e => {
+    const color = catColor(e.c);
+    return `<tr>
+      <td>${e.z}</td>
+      <td class="sym-cell" style="color:${color}">${e.s}</td>
+      <td class="name-cell" onclick="showElementDetail(${e.z})">${e.n}</td>
+      <td><span class="cat-pill-sm" style="background:${color}22;color:${color}">${catLabel(e.c)}</span></td>
+      <td>${e.m}</td>
+      <td>${e.mp}°C</td>
+      <td>${e.bp}°C</td>
+    </tr>`;
+  }).join('');
+  if(!sorted.length) tbody.innerHTML = '<tr><td colspan="7" class="empty">No elements match your search</td></tr>';
+}
+
+// ---- INIT ----
+buildFilterPills();
+renderTable();
+buildQuizCats();
+</script>
+</body>
+</html>
